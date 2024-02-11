@@ -13,6 +13,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Cal lReminder"
+rootProject.name = "Call Reminder"
 include(":app")
  
