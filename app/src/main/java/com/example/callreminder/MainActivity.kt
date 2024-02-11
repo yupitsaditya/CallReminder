@@ -2,6 +2,7 @@ package com.example.callreminder
 
 import android.os.Bundle
 import android.Manifest
+import android.annotation.SuppressLint
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -99,6 +100,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+    @SuppressLint("Range")
     private fun getContactId(contactUri: Uri?): String {
         val projection = arrayOf(ContactsContract.Contacts._ID)
         val cursor = contactUri?.let { uri ->
@@ -113,6 +115,7 @@ class MainActivity : ComponentActivity() {
         cursor?.close()
         return contactId
     }
+    @SuppressLint("Range")
     private fun getContactName(contactUri: Uri?): String {
         var contactName = ""
         contactUri?.let { uri ->
