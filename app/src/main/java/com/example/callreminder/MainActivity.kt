@@ -10,6 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.callreminder.ui.theme.CalLReminderTheme
 import android.app.Activity
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -24,6 +26,9 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 class MainActivity : ComponentActivity() {
 
@@ -36,7 +41,15 @@ class MainActivity : ComponentActivity() {
     companion object {
         private const val CONTACT_PICKER_RESULT = 1001
     }
+    fun onDateTimeSelected(dateTime: String, contact: Contact) {
+        // Handle the selected date and time value here
+        // Update the Contact object with the selected date and time
+        contact.timeToCall = dateTime
 
+        // Add the contact to the list or update it in your data structure
+        contactList.add(contact)
+        adapter.notifyItemInserted(contactList.size - 1)
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -55,6 +68,11 @@ class MainActivity : ComponentActivity() {
         // After setting up RecyclerView adapter and layout manager
         val dividerItemDecoration = SimpleDividerItemDecoration(this)
         contactRecyclerView.addItemDecoration(dividerItemDecoration)
+
+//        pickDateTimeButton = findViewById(R.id.pickDateTimeButton)
+//        pickDateTimeButton.setOnClickListener {
+//            showDateTimePickerDialog()
+//        }
 
 
 
@@ -91,13 +109,19 @@ class MainActivity : ComponentActivity() {
             val contactName = getContactName(contactUri)
             val contactId = getContactId(contactUri)
             val contactPhoneNumber = getContactPhoneNumber(contactId)
+
+
+
             if (contactPhoneNumber != null) {
                 if (contactName.isNotEmpty() && contactId.isNotEmpty() && contactPhoneNumber.isNotEmpty()) {
-                    val contact = Contact(contactName, contactId, contactPhoneNumber)
-                    contactList.add(contact)
-                    adapter.notifyItemInserted(contactList.size - 1)
+                    val contact = Contact(contactName, contactId, contactPhoneNumber, "")
+                    // Pass the contact object to the showDateTimePickerDialog method
+                    showDateTimePickerDialog(contact, this)
+//                    contactList.add(contact)
+//                    adapter.notifyItemInserted(contactList.size - 1)
                 }
             }
+
         }
     }
     @SuppressLint("Range")
@@ -149,6 +173,33 @@ class MainActivity : ComponentActivity() {
         }
         return null
     }
+    private fun showDateTimePickerDialog(contact: Contact, dateTimeSelectedListener: MainActivity)  {
+        val calendar = Calendar.getInstance()
+        val year = calendar.get(Calendar.YEAR)
+        val month = calendar.get(Calendar.MONTH)
+        val day = calendar.get(Calendar.DAY_OF_MONTH)
+        val hour = calendar.get(Calendar.HOUR_OF_DAY)
+        val minute = calendar.get(Calendar.MINUTE)
+
+        val datePickerDialog = DatePickerDialog(this, { _, selectedYear, selectedMonth, selectedDay ->
+            val timePickerDialog = TimePickerDialog(this, { _, selectedHour, selectedMinute ->
+                val selectedDateTime = Calendar.getInstance()
+                selectedDateTime.set(selectedYear, selectedMonth, selectedDay, selectedHour, selectedMinute)
+
+                // Convert the selected date and time to a string format
+                val timeToCall = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(selectedDateTime.time)
+
+                // Pass the selected date and time back to the caller
+                dateTimeSelectedListener.onDateTimeSelected(timeToCall, contact)
+            }, hour, minute, true)
+
+
+            timePickerDialog.show()
+        }, year, month, day)
+
+        datePickerDialog.show()
+    }
+
 
     private class ContactAdapter(private val contacts: List<Contact>):
         RecyclerView.Adapter<ContactAdapter.ContactViewHolder>() {
@@ -171,7 +222,7 @@ class MainActivity : ComponentActivity() {
             private val contactNameTextView: TextView = itemView.findViewById(R.id.contactNameTextView)
             private val contactIdTextView: TextView = itemView.findViewById(R.id.contactIdTextView)
             private lateinit var phoneNumber: String
-
+            private val contactTimeToCall: TextView = itemView.findViewById(R.id.contactIdTimeToCallView)
 
             init {
                 itemView.setOnClickListener {
@@ -191,12 +242,16 @@ class MainActivity : ComponentActivity() {
                 contactNameTextView.text = contact.name
                 contactIdTextView.text = contact.id
                 phoneNumber = contact.phoneNumber
+                contactTimeToCall.text = contact.timeToCall
+
+
             }
 
         }
     }
 }
-data class Contact(val name: String, val id: String, val phoneNumber: String)
+
+data class Contact(val name: String, val id: String, val phoneNumber: String, var timeToCall: String)
 
 
 @Composable
